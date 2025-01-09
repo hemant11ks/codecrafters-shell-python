@@ -1,18 +1,26 @@
 import sys
 
-
 def main():
-    # Uncomment this block to pass the first stage
-    # sys.stdout.write("$ ")
-
-    # Wait for user input
     while True:
+        
         sys.stdout.write("$ ")
-        command = input()
-        print(f"{command}: command not found")
-   
-    
+        sys.stdout.flush()
 
+        
+        command = input().strip()
+
+        if command.startswith("exit"):
+            # Spliting the exit command
+            parts = command.split()
+            if len(parts) == 2 and parts[1].isdigit():
+                exit_code = int(parts[1])
+                sys.exit(exit_code)
+            else:
+                sys.stdout.write("Usage: exit <code>\n")
+                continue
+
+        
+        sys.stdout.write(f"{command}: command not found\n")
 
 if __name__ == "__main__":
     main()
