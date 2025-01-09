@@ -33,9 +33,9 @@ def main():
         if command.startswith("type "):
             cmd_name = command[5:] # Here extracting the command name
             if cmd_name in BUILTINS:
-                sys.stdout.write("f{cmd_name} is a shell builtin\n")
+                sys.stdout.write(f"{cmd_name} is a shell builtin\n")
             else:
-                sys.stdout.write("f{cmd_name}: not found\n")
+                sys.stdout.write(f"{cmd_name}: not found\n")
             continue
 
         # Now Handling the invalid commands
