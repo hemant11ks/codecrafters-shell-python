@@ -1,5 +1,8 @@
 import sys
 
+# Creating list of Built in commands
+BUILTINS = {"echo", "exit", "type"}
+
 def main():
     while True:
 
@@ -24,6 +27,15 @@ def main():
             # Extract the arguments and print them
             echo_args = command[5:]  # Everything after "echo "
             sys.stdout.write(f"{echo_args}\n")
+            continue
+
+        # Handling the type command
+        if command.startswith("type "):
+            cmd_name = command[5:] # Here extracting the command name
+            if cmd_name in BUILTINS:
+                sys.stdout.write("f{cmd_name} is a shell builtin\n")
+            else:
+                sys.stdout.write("f{cmd_name}: not found\n")
             continue
 
         # Now Handling the invalid commands
