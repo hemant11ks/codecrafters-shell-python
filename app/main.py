@@ -5,7 +5,7 @@ import sys
 BUILTINS = {"echo", "exit", "type"}
 
 def find_executable_in_path(command):
-    """Searching for an executable file in the directories listed in PATH."""
+    """Search for an executable file in the directories listed in PATH."""
     path_dirs = os.getenv("PATH", "").split(":")  # Get directories from PATH
     for directory in path_dirs:
         full_path = os.path.join(directory, command)
@@ -29,7 +29,7 @@ def main():
                 exit_code = int(parts[1])
                 sys.exit(exit_code)
             else:
-                sys.stdout.write("exit <code>\n")
+                sys.stdout.write("Usage: exit <code>\n")
                 continue
 
         # Handle the echo command
@@ -55,7 +55,7 @@ def main():
             continue
 
         # Handle invalid commands
-        sys.stdout.write(f"{command}: command was not found\n")
+        sys.stdout.write(f"{command}: command not found\n")
 
 if __name__ == "__main__":
     main()
