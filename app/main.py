@@ -56,6 +56,9 @@ def main():
             executable_path = find_in_path(command)
             if executable_path:
                 try:
+                    # Extract the program name from the full path
+                    program_name = os.path.basename(executable_path)
+                    print(f"Arg #0 (program name): {program_name}")  # Print only the program name
                     # Run the command with arguments
                     result = subprocess.run([executable_path] + args, check=True, text=True)
                 except subprocess.CalledProcessError as e:
