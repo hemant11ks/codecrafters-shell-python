@@ -1,5 +1,6 @@
 import os
 import sys
+import subprocess
 
 # List of shell built-ins
 BUILT_INS = {"echo", "exit", "type"}
@@ -28,6 +29,18 @@ def handle_type_command(args):
         else:
             print(f"{command}: not found")
 
+def execute_external_command(command, args):
+    """Execute an external program."""
+    executable = find_executable_in_path(command)
+    if executable:
+        # Execute the command using subprocess
+        try:
+            process = subprocess.run([executable] + args, check=True)
+        except subprocess.CalledProcessError:
+            print(f"{command}: error while executing")
+    else:
+        print(f"{command}: command not found")
+
 def main():
     while True:
         # Display the prompt
@@ -36,15 +49,15 @@ def main():
 
         # Wait for user input
         try:
-            command = input().strip()
+            command_line = input().strip()
         except EOFError:  # Handle end-of-file (Ctrl+D) gracefully
             break
 
-        if not command:
+        if not command_line:
             continue
 
         # Parse the command and arguments
-        parts = command.split()
+        parts = command_line.split()
         cmd_name = parts[0]
         args = parts[1:]
 
@@ -57,11 +70,7 @@ def main():
             print(" ".join(args))
         else:
             # Handle external commands
-            executable = find_executable_in_path(cmd_name)
-            if executable:
-                os.execvp(executable, [cmd_name] + args)
-            else:
-                print(f"{cmd_name}: command not found")
+            execute_external_command(cmd_name, args)
 
 if __name__ == "__main__":
     main()
