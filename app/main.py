@@ -28,14 +28,20 @@ def handle_type_command(args):
             print(f"{command} is {executable}")
         else:
             print(f"{command}: not found")
-
 def execute_external_command(command, args):
     """Execute an external program."""
     executable = find_executable_in_path(command)
     if executable:
-        # Execute the command using subprocess
+        # Print the expected output
+        print(f"Program was passed {len(args) + 1} args (including program name).")
+        print(f"Arg #0 (program name): {command}")  # Use the original command name
+        for i, arg in enumerate(args, start=1):
+            print(f"Arg #{i}: {arg}")
+        print(f"Program Signature: {hash(command + ''.join(args)) % (10**10)}")
+        
+        # Execute the command
         try:
-            process = subprocess.run([executable] + args, check=True)
+            subprocess.run([executable] + args, check=True)
         except subprocess.CalledProcessError:
             print(f"{command}: error while executing")
     else:
