@@ -1,6 +1,8 @@
 import os
 import sys
-import subprocess
+
+# List of shell built-ins
+BUILT_INS = {"echo", "exit", "type"}
 
 def find_executable_in_path(command):
     """Search for an executable file in the directories listed in PATH."""
@@ -10,6 +12,21 @@ def find_executable_in_path(command):
         if os.path.isfile(full_path) and os.access(full_path, os.X_OK):
             return full_path
     return None
+
+def handle_type_command(args):
+    """Handle the 'type' command."""
+    if len(args) < 1:
+        return
+
+    command = args[0]
+    if command in BUILT_INS:
+        print(f"{command} is a shell builtin")
+    else:
+        executable = find_executable_in_path(command)
+        if executable:
+            print(f"{command} is {executable}")
+        else:
+            print(f"{command}: not found")
 
 def main():
     while True:
@@ -28,23 +45,23 @@ def main():
 
         # Parse the command and arguments
         parts = command.split()
-        program_name = parts[0]
+        cmd_name = parts[0]
         args = parts[1:]
 
-        # Locate the executable in PATH
-        executable = find_executable_in_path(program_name)
-        if executable:
-            try:
-                # Run the program and capture its output
-                result = subprocess.run([executable] + args, capture_output=True, text=True)
-                output = result.stdout
-
-                # Format the program's output as expected
-                sys.stdout.write(output.replace(executable, program_name))
-            except FileNotFoundError:
-                sys.stdout.write(f"{program_name}: command not found\n")
+        # Handle built-in commands
+        if cmd_name == "exit":
+            break
+        elif cmd_name == "type":
+            handle_type_command(args)
+        elif cmd_name == "echo":
+            print(" ".join(args))
         else:
-            sys.stdout.write(f"{program_name}: command not found\n")
+            # Handle external commands
+            executable = find_executable_in_path(cmd_name)
+            if executable:
+                os.execvp(executable, [cmd_name] + args)
+            else:
+                print(f"{cmd_name}: command not found")
 
 if __name__ == "__main__":
     main()
