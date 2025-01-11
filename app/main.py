@@ -35,8 +35,12 @@ def main():
         executable = find_executable_in_path(program_name)
         if executable:
             try:
-                # Execute the command and print its output directly
-                subprocess.run([executable] + args)
+                # Run the program and capture its output
+                result = subprocess.run([executable] + args, capture_output=True, text=True)
+                output = result.stdout
+
+                # Format the program's output as expected
+                sys.stdout.write(output.replace(executable, program_name))
             except FileNotFoundError:
                 sys.stdout.write(f"{program_name}: command not found\n")
         else:
