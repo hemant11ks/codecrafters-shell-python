@@ -1,80 +1,107 @@
 import os
 import sys
+import shlex
+from dataclasses import dataclass
 import subprocess
+from typing import TextIO
 
-def find_in_path(command):
-    """
-    Search for the command in the PATH environment variable directories.
-    Returns the full path if found, otherwise None.
-    """
-    path = os.environ.get("PATH", "")
-    for directory in path.split(":"):
-        potential_path = os.path.join(directory, command)
-        if os.path.isfile(potential_path) and os.access(potential_path, os.X_OK):
-            return potential_path
+PATH = os.environ["PATH"]
+COMMANDS = ["type", "pwd", "echo", "cd", "exit"]
+
+@dataclass
+class Command:
+    bin: str
+    args: list[str]
+    stdout: TextIO = sys.stdout
+    stderr: TextIO = sys.stderr
+
+    def __post_init__(self):
+        redirect = ""
+        output = ""
+        args: list[str] = []
+        for i, arg in enumerate(self.args):
+            if arg in {">", ">>", "1>", "2>", "1>>", "2>>"}:
+                redirect = arg
+                output = " ".join(self.args[i + 1 :])
+                break
+            else:
+                args.append(arg)
+        self.args = args
+        if not redirect:
+            return
+        match redirect:
+            case ">" | "1>":
+                self.stdout = open(output, "w")
+            case ">>" | "1>>":
+                self.stdout = open(output, "a+")
+            case ">" | "2>":
+                self.stderr = open(output, "w")
+            case ">>" | "2>>":
+                self.stderr = open(output, "a+")
+            case _:
+                raise ValueError(f"Invalid redirect: {redirect}")
+
+def parseInput(text: str) -> Command:
+    args = shlex.split(text)
+    return Command(bin=args[0], args=args[1:])
+
+def get_executable_path(bin: str) -> str | None:
+    for path in PATH.split(os.pathsep):
+        fp = os.path.join(path, bin)
+        if os.path.exists(fp):
+            return fp
     return None
 
 def main():
+    # Display the welcome message when the shell starts
+    print("Welcome to the shell made by Hrishin Debnath (BRAHMIN)")
+
+    sys.stdout.write("$ ")
     while True:
-        # Display the prompt
-        sys.stdout.write("$ ")
-        sys.stdout.flush()
-
-        # Get the user input
+        result = input()
+        command = parseInput(result)
+        str_args = " ".join(command.args)
+        stdout = command.stdout
+        stderr = command.stderr
         try:
-            user_input = input().strip()
-        except EOFError:
-            break  # Handle EOF to exit gracefully
-
-        if not user_input:
-            continue
-
-        # Split the command into executable and arguments
-        parts = user_input.split(" ")
-        command, *args = parts
-
-        # Handle built-in commands
-        if command == "exit" and args == ["0"]:
-            exit(0)
-        elif command == "echo":
-            print(" ".join(args))
-        elif command == "type":
-            if args:
-                cmd_to_check = args[0]
-                if cmd_to_check in {"echo", "exit", "type"}:
-                    print(f"{cmd_to_check} is a shell builtin")
-                else:
-                    location = find_in_path(cmd_to_check)
-                    if location:
-                        print(f"{cmd_to_check} is {location}")
+            match command.bin:
+                case "type":
+                    if str_args in COMMANDS:
+                        print(f"{str_args} is a shell builtin", file=stdout)
+                    elif path := get_executable_path(str_args):
+                        print(f"{str_args} is {path}", file=stdout)
                     else:
-                        print(f"{cmd_to_check}: not found")
-            else:
-                print("type: missing argument")
-        else:
-            # Handle external commands
-            executable_path = find_in_path(command)
-            if executable_path:
-                try:
-                    # Extract the program name from the full path
-                    program_name = os.path.basename(executable_path)
-                    
-                    # Print the message about the arguments passed
-                    print(f"Program was passed {len(args) + 1} args (including program name).")
-                    
-                    # Print the program name and arguments
-                    print(f"Arg #0 (program name): {program_name}")
-                    for i, arg in enumerate(args, start=1):
-                        print(f"Arg #{i}: {arg}")
-                    
-                    # Run the command with arguments
-                    result = subprocess.run([executable_path] + args, check=True, text=True)
-                except subprocess.CalledProcessError as e:
-                    print(f"Error: {e}")
-                except Exception as e:
-                    print(f"{command}: failed to execute. {e}")
-            else:
-                print(f"{user_input}: command not found")
+                        print(f"{str_args}: not found", file=stderr)
+                case "exit":
+                    sys.exit(0)
+                case "echo":
+                    print(str_args, file=stdout)
+                case "cd":
+                    if str_args == "~":
+                        os.chdir(os.path.expanduser("~"))
+                    elif os.path.exists(str_args):
+                        os.chdir(str_args)
+                    else:
+                        print(f"cd: {str_args}: No such file or directory", file=stderr)
+                case "pwd":
+                    print(os.getcwd(), file=stdout)
+                case _:
+                    try:
+                        subprocess.run(
+                            [command.bin, *command.args],
+                            stdout=command.stdout,
+                            stderr=command.stderr,
+                        )
+                    except Exception:
+                        print(f"{result}: command not found", file=stderr)
+        finally:
+            if stdout is not sys.stdout:
+                stdout.close()
+            if stderr is not sys.stderr:
+                stderr.close()
+        sys.stdout.write("$ ")
 
 if __name__ == "__main__":
     main()
+
+# End
