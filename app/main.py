@@ -1,5 +1,6 @@
 import os
 import sys
+import subprocess
 
 # List of supported built-in commands
 BUILTINS = {"echo", "exit", "type"}
@@ -20,7 +21,13 @@ def main():
         sys.stdout.flush()
 
         # Wait for user input
-        command = input().strip()
+        try:
+            command = input().strip()
+        except EOFError:  # Handle end-of-file (Ctrl+D) gracefully
+            break
+
+        if not command:
+            continue
 
         # Handle the exit command
         if command.startswith("exit"):
@@ -54,8 +61,22 @@ def main():
                     sys.stdout.write(f"{cmd_name}: not found\n")
             continue
 
-        # Handle invalid commands
-        sys.stdout.write(f"{command}: command not found\n")
+        # Handle external commands
+        parts = command.split()
+        executable = find_executable_in_path(parts[0])
+        if executable:
+            try:
+                # Execute the command and print its output
+                result = subprocess.run(
+                    [executable] + parts[1:],
+                    check=True
+                )
+            except subprocess.CalledProcessError as e:
+                sys.stderr.write(f"Error: {e}\n")
+            except FileNotFoundError:
+                sys.stdout.write(f"{parts[0]}: command not found\n")
+        else:
+            sys.stdout.write(f"{parts[0]}: command not found\n")
 
 if __name__ == "__main__":
     main()
