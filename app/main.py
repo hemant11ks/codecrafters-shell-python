@@ -35,21 +35,8 @@ def main():
         executable = find_executable_in_path(program_name)
         if executable:
             try:
-                # Execute the command and capture its output
-                result = subprocess.run(
-                    [executable] + args,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True
-                )
-                # Print the expected output
-                sys.stdout.write(f"Program was passed {len(parts)} args (including program name).\n")
-                sys.stdout.write(f"Arg #0 (program name): {program_name}\n")
-                for i, arg in enumerate(args, start=1):
-                    sys.stdout.write(f"Arg #{i}: {arg}\n")
-                sys.stdout.write(result.stdout)  # Include program output if necessary
-            except subprocess.CalledProcessError as e:
-                sys.stderr.write(f"Error: {e}\n")
+                # Execute the command and print its output directly
+                subprocess.run([executable] + args)
             except FileNotFoundError:
                 sys.stdout.write(f"{program_name}: command not found\n")
         else:
