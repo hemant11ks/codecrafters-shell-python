@@ -53,8 +53,6 @@ def get_executable_path(bin: str) -> str | None:
     return None
 
 def main():
-    # # Display the welcome message when the shell starts
-    # print("Welcome to the shell made by Hrishin Debnath (BRAHMIN)")
 
     sys.stdout.write("$ ")
     while True:
