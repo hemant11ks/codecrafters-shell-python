@@ -58,7 +58,15 @@ def main():
                 try:
                     # Extract the program name from the full path
                     program_name = os.path.basename(executable_path)
-                    print(f"Arg #0 (program name): {program_name}")  # Print only the program name
+                    
+                    # Print the message about the arguments passed
+                    print(f"Program was passed {len(args) + 1} args (including program name).")
+                    
+                    # Print the program name and arguments
+                    print(f"Arg #0 (program name): {program_name}")
+                    for i, arg in enumerate(args, start=1):
+                        print(f"Arg #{i}: {arg}")
+                    
                     # Run the command with arguments
                     result = subprocess.run([executable_path] + args, check=True, text=True)
                 except subprocess.CalledProcessError as e:
